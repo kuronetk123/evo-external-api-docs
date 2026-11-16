@@ -17,8 +17,8 @@
 </head>
 <body>
   <div class="banner">
-    Trong ô <b>Curl</b> của từng endpoint, chọn <b>PowerShell</b> hoặc <b>Linux / macOS</b>.
-    PowerShell bắt đầu bằng <code>curl.exe</code> và dán được vào Windows.
+    Ô <b>Curl</b> của từng endpoint mở sẵn lệnh <b>PowerShell</b> (<code>curl.exe</code>).
+    Bấm tab <b>Linux / macOS</b> nếu cần lệnh <code>curl</code>.
     Bấm <b>Authorize</b> rồi <b>Execute</b> trên trang này chỉ hiện ví dụ mẫu, không gọi server thật.
   </div>
   <div id="swagger-ui"></div>
@@ -45,11 +45,29 @@
       }
       return Promise.resolve(new Response(JSON.stringify(sample), { status: 200, headers: jsonHeader }));
     };
+    function powershellFirst() {
+      return {
+        statePlugins: {
+          requestSnippets: {
+            wrapSelectors: {
+              getSnippetGenerators: (orig) => (...args) => {
+                const order = (map) => map && map.sortBy
+                  ? map.sortBy((value, key) => key === "curl_powershell" ? 0 : 1)
+                  : map;
+                const result = orig(...args);
+                return typeof result === "function" ? (inner) => order(result(inner)) : order(result);
+              }
+            }
+          }
+        }
+      };
+    }
     SwaggerUIBundle({
       spec: spec,
       dom_id: "#swagger-ui",
       deepLinking: true,
       persistAuthorization: true,
+      plugins: [powershellFirst],
       requestSnippetsEnabled: true,
       requestSnippets: {
         generators: {
